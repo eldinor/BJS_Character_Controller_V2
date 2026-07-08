@@ -20,8 +20,10 @@
   ],
   "scripts": {
     "build": "vite build && tsc -p tsconfig.build.json",
+    "build:demo": "vite build --config vite.demo.config.mjs --configLoader runner",
     "dev": "vite build --watch",
     "demo": "vite",
+    "preview:demo": "vite preview --config vite.demo.config.mjs --configLoader runner",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

@@ -101,12 +101,16 @@ Keep all use of Babylon Lite private fields inside `src/lite-internals.ts`. When
 ```bash
 npm install
 npm run demo
+npm run build:demo
+npm run preview:demo
 npm run typecheck
 npm test
 npm run build
 ```
 
 Open the URL printed by Vite (normally `http://localhost:5173`). The playground includes stairs, low ceilings, walkable and steep ramps, a moving platform, and pushable dynamic boxes. Use WASD to move, Shift to sprint, Space to jump, and C to crouch.
+
+`build:demo` creates a standalone static playground in `demo-dist/`; `preview:demo` serves that production build locally.
 
 The demo camera uses frame-rate-independent target damping: horizontal tracking is intentionally faster than vertical tracking so stair stepping remains responsive without camera bob.
 
