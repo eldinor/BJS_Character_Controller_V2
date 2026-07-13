@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LiteCC — Game Level</title>
+    <link rel="stylesheet" href="/demo/style.css" />
+  </head>
+  <body>
+    <canvas id="renderCanvas"></canvas>
+    <aside class="hud">
+      <strong>LiteCC — game-level.glb</strong>
+      <span>WASD · camera-relative move</span>
+      <span>Shift · sprint</span>
+      <span>Space · jump</span>
+      <span>C · crouch / crouch-run</span>
+      <span>R · return to the start</span>
+      <button id="cameraMode" type="button"></button>
+      <output id="state">loading level…</output>
+    </aside>
+    <div id="error" class="error" hidden></div>
+    <script type="module" src="/demo/game-level.ts"></script>
+  </body>
+</html>

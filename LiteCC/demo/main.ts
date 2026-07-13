@@ -121,7 +121,7 @@ function makeAnimatedPlatform(
 
 async function main(): Promise<void> {
   if (!navigator.gpu) throw new Error("WebGPU is required for Babylon Lite.");
-  const engine = await createEngine(canvas);
+  const engine = await createEngine(canvas!);
   const scene = createSceneContext(engine);
   // Emscripten cannot infer the WASM location after Vite pre-bundles the JS loader.
   const havok = await HavokPhysics({ locateFile: () => havokWasmUrl });
@@ -134,8 +134,16 @@ async function main(): Promise<void> {
   // Raised deck for ledge detection and controlled-fall testing.
   makeStaticBox(engine, scene, world, [0, 0.3, -11.5], [6, 0.6, 5], [0.18, 0.34, 0.24, 1], "ledge-deck");
   makeStaticBox(engine, scene, world, [0, 0.15, -8.65], [3, 0.3, 0.7], [0.2, 0.42, 0.28, 1], "ledge-step");
-  makeStaticBox(engine, scene, world, [8, 0.65, 5], [4, 0.45, 7], [0.12, 0.42, 0.29, 1], "walkable-ramp", [Math.PI / 9, 0, 0]);
-  makeStaticBox(engine, scene, world, [9, 1.55, -6], [4, 0.45, 7], [0.55, 0.16, 0.14, 1], "steep-ramp", [Math.PI * 0.36, 0, 0]);
+  makeStaticBox(engine, scene, world, [8, 0.65, 5], [4, 0.45, 7], [0.12, 0.42, 0.29, 1], "walkable-ramp", [
+    Math.PI / 9,
+    0,
+    0,
+  ]);
+  makeStaticBox(engine, scene, world, [9, 1.55, -6], [4, 0.45, 7], [0.55, 0.16, 0.14, 1], "steep-ramp", [
+    Math.PI * 0.36,
+    0,
+    0,
+  ]);
 
   // Original controller demo stairs: 8 overlapping box steps, 0.2 m rise each.
   for (let i = 0; i < 8; i++) {
@@ -173,10 +181,22 @@ async function main(): Promise<void> {
   // allowing the platform to slide out from under the character.
   setPhysicsBodyPrestepType(platformAggregate.body, PhysicsPrestepType.ACTION);
   const verticalPlatform = makeAnimatedPlatform(
-    engine, scene, world, [5, 0.3, -10], [3, 0.5, 3], [0.1, 0.55, 0.62, 1], "vertical-platform",
+    engine,
+    scene,
+    world,
+    [5, 0.3, -10],
+    [3, 0.5, 3],
+    [0.1, 0.55, 0.62, 1],
+    "vertical-platform",
   );
   const rotatingPlatform = makeAnimatedPlatform(
-    engine, scene, world, [8, 0.3, -1], [5, 0.5, 2], [0.72, 0.42, 0.1, 1], "rotating-platform",
+    engine,
+    scene,
+    world,
+    [8, 0.3, -1],
+    [5, 0.5, 2],
+    [0.72, 0.42, 0.1, 1],
+    "rotating-platform",
   );
   let platformTime = 0;
   onBeforeRender(scene, (deltaMs) => {
@@ -214,7 +234,8 @@ async function main(): Promise<void> {
   setCameraLimits(camera, { lowerBeta: 0.25, upperBeta: 1.45, lowerRadius: 0.03, upperRadius: 12 }, scene);
   const followCamera = new LiteFollowCamera(camera, world);
   const updateCameraModeUi = () => {
-    cameraModeButton.textContent = followCamera.mode === "thirdPerson" ? "Switch to first person (V)" : "Switch to third person (V)";
+    cameraModeButton.textContent =
+      followCamera.mode === "thirdPerson" ? "Switch to first person (V)" : "Switch to third person (V)";
   };
   const toggleCameraMode = () => {
     followCamera.toggleMode();
@@ -252,7 +273,15 @@ async function main(): Promise<void> {
     const showThirdPersonCharacter = followCamera.firstPersonBlend < 0.8;
     setMeshVisible(visual, showThirdPersonCharacter);
     setMeshVisible(facingMarker, showThirdPersonCharacter);
-    const motionState = snapshot.nearLedge ? "LEDGE" : snapshot.falling ? `fall ${snapshot.fallTime.toFixed(1)}s` : snapshot.grounded ? "grounded" : snapshot.sliding ? "sliding" : "air";
+    const motionState = snapshot.nearLedge
+      ? "LEDGE"
+      : snapshot.falling
+        ? `fall ${snapshot.fallTime.toFixed(1)}s`
+        : snapshot.grounded
+          ? "grounded"
+          : snapshot.sliding
+            ? "sliding"
+            : "air";
     stateOutput.value = `${snapshot.stance} · ${motionState} · ${snapshot.horizontalSpeed.toFixed(1)} m/s · steps ${stepsClimbed} · snaps ${snapDowns}`;
   });
 
