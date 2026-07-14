@@ -72,14 +72,31 @@ async function main(): Promise<void> {
   // A verified walkable triangle on Floor_Floor_01_0. The floor is at y=4.4;
   // the controller position is its capsule centre, hence the 1.08 m offset.
   const spawn = { x: 24.2, y: 5.48, z: -21.9 };
-  const character = new LiteCharacterController(world, spawn, { standingHeight, crouchingHeight });
+  // The authored mesh has small seams and bevels around its stairs. Keep these
+  // allowances local to this demo rather than relaxing the package defaults.
+  const character = new LiteCharacterController(world, spawn, {
+    standingHeight,
+    crouchingHeight,
+    walkSpeed: 1.8,
+    sprintSpeed: 3.4,
+    maxStepHeight: 0.5,
+    stepProbeDistance: 0.45,
+    groundSnapDistance: 0.4,
+  });
   const visual = createCapsule(engine, { height: standingHeight, radius: 0.35 });
   visual.material = createPbrMaterial({
     baseColorFactor: [0.08, 0.68, 0.95, 1], metallicFactor: 0.05, roughnessFactor: 0.45,
   });
   addToScene(scene, visual);
 
-  const camera = createArcRotateCamera(-Math.PI / 2, 1.05, 7, {
+  // Face the staircase near (23.1, -32.1). The previous -PI/2 heading faced
+  // away from it, making the player turn the camera before W could approach it.
+  const stairsApproach = { x: 23.1, z: -32.1 };
+  const initialCameraAlpha = Math.atan2(
+    spawn.z - stairsApproach.z,
+    spawn.x - stairsApproach.x,
+  );
+  const camera = createArcRotateCamera(initialCameraAlpha, 1.05, 7, {
     x: spawn.x, y: spawn.y + 0.35, z: spawn.z,
   });
   addToScene(scene, camera);
@@ -100,7 +117,10 @@ async function main(): Promise<void> {
   cameraModeButton.addEventListener("click", toggleCameraMode);
   window.addEventListener("keydown", (event) => {
     if (event.code === "KeyV" && !event.repeat) toggleCameraMode();
-    if (event.code === "KeyR" && !event.repeat) character.teleport(spawn);
+    if (event.code === "KeyR" && !event.repeat) {
+      character.teleport(spawn);
+      camera.alpha = initialCameraAlpha;
+    }
   });
   updateCameraModeUi();
 

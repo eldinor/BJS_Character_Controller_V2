@@ -135,13 +135,15 @@ describe("LiteCharacterController with Havok", () => {
     const world = createHavokWorld(scene, havok, { x: 0, y: -22, z: 0 });
     addBox(world, "ground", [0, -0.25, 0], [12, 0.5, 12]);
     addBox(world, "step", [0, 0.15, 2], [3, 0.3, 1]);
-    const character = new LiteCharacterController(world, { x: 0, y: 1, z: 0 });
+    // Start close enough that the riser is already inside the forward probe;
+    // this covers near-contact step correction.
+    const character = new LiteCharacterController(world, { x: 0, y: 1, z: 1.05 });
     let stepped = 0;
     character.events.on("stepped", () => stepped++);
     onPhysicsAfterStep(world, (dt) => character.step(dt, { move: { x: 0, y: 0, z: 1 }, crouch: false }));
     runHeadlessSteps(engine, scene, 150);
     expect(character.snapshot().position.z).toBeGreaterThan(3);
-    expect(stepped).toBeGreaterThan(0);
+    expect(stepped).toBe(1);
     character.dispose();
     disposePhysics(world);
   });
@@ -161,7 +163,9 @@ describe("LiteCharacterController with Havok", () => {
     let maxHeight = 0;
     let elapsed = 0;
     let reachedTopAt = 0;
+    let stepsClimbed = 0;
     character.events.on("jumped", () => { jumped = true; });
+    character.events.on("stepped", () => { stepsClimbed++; });
     onPhysicsAfterStep(world, (dt) => {
       elapsed += dt;
       const moveZ = character.snapshot().position.z < 6.2 ? 1 : 0;
@@ -174,6 +178,7 @@ describe("LiteCharacterController with Havok", () => {
     expect(snapshot.position.z).toBeGreaterThan(6);
     expect(maxHeight).toBeGreaterThan(2);
     expect(reachedTopAt).toBeGreaterThan(2);
+    expect(stepsClimbed).toBe(8);
     expect(jumped).toBe(false);
     character.dispose();
     disposePhysics(world);
