@@ -148,6 +148,27 @@ describe("LiteCharacterController with Havok", () => {
     disposePhysics(world);
   });
 
+  it("steps when a riser contacts the side of the capsule", async () => {
+    const wasmUrl = new URL("../node_modules/@babylonjs/havok/lib/esm/HavokPhysics.wasm", import.meta.url);
+    const havok = await HavokPhysics({ wasmBinary: Uint8Array.from(readFileSync(wasmUrl)).buffer });
+    const engine = createNullEngine();
+    const scene = createSceneContext(engine, { defaultRenderTask: false });
+    const world = createHavokWorld(scene, havok, { x: 0, y: -22, z: 0 });
+    addBox(world, "ground", [0, -0.25, 0], [12, 0.5, 12]);
+    // The box misses the centre probe at x=0 but overlaps the capsule's right
+    // side, matching an off-centre bevel or stair edge in authored meshes.
+    addBox(world, "offset-step", [0.42, 0.15, 2], [0.5, 0.3, 1]);
+    const character = new LiteCharacterController(world, { x: 0, y: 1, z: 0 });
+    let stepped = 0;
+    character.events.on("stepped", () => stepped++);
+    onPhysicsAfterStep(world, (dt) => character.step(dt, { move: { x: 0, y: 0, z: 1 }, crouch: false }));
+    runHeadlessSteps(engine, scene, 150);
+    expect(character.snapshot().position.z).toBeGreaterThan(3);
+    expect(stepped).toBe(1);
+    character.dispose();
+    disposePhysics(world);
+  });
+
   it("climbs a multi-step staircase without jumping", async () => {
     const wasmUrl = new URL("../node_modules/@babylonjs/havok/lib/esm/HavokPhysics.wasm", import.meta.url);
     const havok = await HavokPhysics({ wasmBinary: Uint8Array.from(readFileSync(wasmUrl)).buffer });

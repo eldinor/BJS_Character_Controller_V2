@@ -11,6 +11,7 @@ export default defineConfig({
       input: {
         playground: resolve(import.meta.dirname, "index.html"),
         gameLevel: resolve(import.meta.dirname, "game-level.html"),
+        litePg: resolve(import.meta.dirname, "lite-pg.html"),
       },
     },
   },

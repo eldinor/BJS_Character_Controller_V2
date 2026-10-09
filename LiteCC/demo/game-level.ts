@@ -72,17 +72,7 @@ async function main(): Promise<void> {
   // A verified walkable triangle on Floor_Floor_01_0. The floor is at y=4.4;
   // the controller position is its capsule centre, hence the 1.08 m offset.
   const spawn = { x: 24.2, y: 5.48, z: -21.9 };
-  // The authored mesh has small seams and bevels around its stairs. Keep these
-  // allowances local to this demo rather than relaxing the package defaults.
-  const character = new LiteCharacterController(world, spawn, {
-    standingHeight,
-    crouchingHeight,
-    walkSpeed: 1.8,
-    sprintSpeed: 3.4,
-    maxStepHeight: 0.5,
-    stepProbeDistance: 0.45,
-    groundSnapDistance: 0.4,
-  });
+  const character = new LiteCharacterController(world, spawn, { standingHeight, crouchingHeight });
   const visual = createCapsule(engine, { height: standingHeight, radius: 0.35 });
   visual.material = createPbrMaterial({
     baseColorFactor: [0.08, 0.68, 0.95, 1], metallicFactor: 0.05, roughnessFactor: 0.45,

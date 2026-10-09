@@ -265,47 +265,63 @@ export class LiteCharacterController {
     const feetY = position.y - height * 0.5;
     const front = this.config.radius + this.physics.keepDistance + 0.01;
     const endDistance = front + this.config.stepProbeDistance;
-    const fromLow = {
-      x: position.x + direction.x * front,
-      y: feetY + this.config.stepSkin,
-      z: position.z + direction.z * front,
-    };
-    const toLow = {
-      x: position.x + direction.x * endDistance,
-      y: fromLow.y,
-      z: position.z + direction.z * endDistance,
-    };
-    const obstruction = physicsRaycast(this.world, fromLow, toLow);
-    if (!obstruction.hasHit) return false;
-    // A walkable ramp intersects the low forward ray too, but it is not a
-    // step. Let Havok's support/slope solver handle upward-facing surfaces;
-    // stepping is reserved for a wall-like riser followed by a walkable top.
-    if (obstruction.hitNormal.y >= this.physics.maxSlopeCosine) return false;
-
     const clearanceY = feetY + this.config.maxStepHeight + this.config.stepSkin;
-    const fromHigh = { x: fromLow.x, y: clearanceY, z: fromLow.z };
-    const toHigh = { x: toLow.x, y: clearanceY, z: toLow.z };
-    if (physicsRaycast(this.world, fromHigh, toHigh).hasHit) return false;
+    const lateral = { x: -direction.z, y: 0, z: direction.x };
+    const sideProbe = this.config.radius * 0.65;
 
-    const downFrom = { x: toLow.x, y: clearanceY, z: toLow.z };
-    const downTo = { x: toLow.x, y: feetY - this.config.stepSkin, z: toLow.z };
-    const landing = physicsRaycast(this.world, downFrom, downTo);
-    if (!landing.hasHit || landing.hitNormal.y < this.physics.maxSlopeCosine) return false;
+    // A single centre ray misses bevels and stair edges contacted by the side
+    // of the capsule. Probe the centre first, then both lateral lanes.
+    for (const offset of [0, sideProbe, -sideProbe]) {
+      const lateralX = lateral.x * offset;
+      const lateralZ = lateral.z * offset;
+      const fromLow = {
+        x: position.x + direction.x * front + lateralX,
+        y: feetY + this.config.stepSkin,
+        z: position.z + direction.z * front + lateralZ,
+      };
+      const toLow = {
+        x: position.x + direction.x * endDistance + lateralX,
+        y: fromLow.y,
+        z: position.z + direction.z * endDistance + lateralZ,
+      };
+      const obstruction = physicsRaycast(this.world, fromLow, toLow);
+      if (!obstruction.hasHit) continue;
+      // Walkable ramps stay with Havok's slope solver; stepping is reserved
+      // for a wall-like riser followed by a walkable top.
+      if (obstruction.hitNormal.y >= this.physics.maxSlopeCosine) continue;
 
-    const rise = landing.hitPoint.y - feetY;
-    if (rise <= this.config.stepSkin || rise > this.config.maxStepHeight) return false;
+      const fromHigh = { x: fromLow.x, y: clearanceY, z: fromLow.z };
+      const toHigh = { x: toLow.x, y: clearanceY, z: toLow.z };
+      if (physicsRaycast(this.world, fromHigh, toHigh).hasHit) continue;
 
-    // Lift and advance together. Raising in place leaves the capsule against
-    // the riser, so it falls back down and repeats the step every frame.
-    this.physics.setPosition({
-      x: position.x + direction.x * this.config.stepProbeDistance,
-      y: position.y + rise + this.config.stepSkin,
-      z: position.z + direction.z * this.config.stepProbeDistance,
-    });
-    this.stepMovementDebt += this.config.stepProbeDistance;
-    resetCharacterContacts(this.physics);
-    this.events.emit("stepped", { height: rise });
-    return true;
+      const downFrom = { x: toLow.x, y: clearanceY, z: toLow.z };
+      const downTo = { x: toLow.x, y: feetY - this.config.stepSkin, z: toLow.z };
+      const landing = physicsRaycast(this.world, downFrom, downTo);
+      if (!landing.hasHit || landing.hitNormal.y < this.physics.maxSlopeCosine) continue;
+
+      const rise = landing.hitPoint.y - feetY;
+      if (rise <= this.config.stepSkin || rise > this.config.maxStepHeight) continue;
+
+      // Advance only far enough to clear the detected edge. Using the whole
+      // probe distance for every bevel makes dense authored stairs accelerate.
+      const advance = Math.min(
+        this.config.stepProbeDistance,
+        Math.max(
+          this.config.stepSkin,
+          obstruction.hitDistance + this.physics.keepDistance + this.config.stepSkin,
+        ),
+      );
+      this.physics.setPosition({
+        x: position.x + direction.x * advance,
+        y: position.y + rise + this.config.stepSkin,
+        z: position.z + direction.z * advance,
+      });
+      this.stepMovementDebt += advance;
+      resetCharacterContacts(this.physics);
+      this.events.emit("stepped", { height: rise });
+      return true;
+    }
+    return false;
   }
 
   private trySnapDown(): CharacterSurfaceInfo | null {
