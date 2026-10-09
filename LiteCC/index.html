@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LiteCC Playground</title>
+    <link rel="stylesheet" href="/demo/style.css" />
+  </head>
+  <body>
+    <canvas id="renderCanvas"></canvas>
+    <aside class="hud">
+      <strong>LiteCC Playground</strong>
+      <span>WASD · camera-relative move</span>
+      <span>Shift · sprint</span>
+      <span>Space · jump</span>
+      <span>C · crouch / crouch-run</span>
+      <span>Green ramp walkable · red ramp steep</span>
+      <span>Purple horizontal · cyan vertical · gold rotating</span>
+      <span>Orange boxes are pushable</span>
+      <span>Raised green deck tests ledges and falling</span>
+      <button id="cameraMode" type="button"></button>
+      <output id="state">starting…</output>
+    </aside>
+    <div id="error" class="error" hidden></div>
+    <script type="module" src="/demo/main.ts"></script>
+  </body>
+</html>
